@@ -27,7 +27,6 @@ class MainWindow(QMainWindow):
         self.table_adjacency.cellChanged.connect(self.on_cell_changed)
         self.table_adjacency.setMaximumHeight(300)
 
-
         layout_result = QVBoxLayout()
         layout_result.setAlignment(Qt.AlignTop)
 
@@ -37,8 +36,6 @@ class MainWindow(QMainWindow):
         widget_result = QWidget()
         widget_result.setLayout(layout_result)
         layout.addWidget(widget_result)
-
-        
 
         # Fields
         self.label_source = QLabel('Source:')
@@ -75,7 +72,6 @@ class MainWindow(QMainWindow):
         controls_layout.addWidget(self.line_edit_target)
         controls_layout.addWidget(self.label_weight)
         controls_layout.addWidget(self.line_edit_weight)
-
 
         controls_layout.addWidget(self.add_edge_button)
         controls_layout.addWidget(self.add_vertex_button)
@@ -119,6 +115,9 @@ class MainWindow(QMainWindow):
         self.refresh()
     
     def add_edge(self, source, target, weight):
+        if (source >= self.graph.vcount() or target >= self.graph.vcount()):
+            return
+
         weight = weight if weight > 0 else 0
 
         try:
@@ -127,8 +126,7 @@ class MainWindow(QMainWindow):
             pass
 
         if (weight > 0):
-            self.graph.add_edge(source, int(target), weight=weight)
-
+            self.graph.add_edge(source, target, weight=weight)
 
         self.table_adjacency.blockSignals(True)
         self.table_adjacency.setItem(source, target, self.make_table_item(str(weight)))
@@ -171,7 +169,7 @@ class MainWindow(QMainWindow):
     def reset_graph(self):
         self.graph = ig.Graph()
         self.initialize_table_adjacency()
-        self.refresh()
+        self.refresh_image()
 
     def refresh(self):
         self.refresh_image()
@@ -196,8 +194,7 @@ class MainWindow(QMainWindow):
         item = self.make_table_item("0")
         item.setFlags(Qt.ItemFlag.NoItemFlags | Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable)
         self.table_adjacency.setItem(0, 0, item)
-        self.refresh_degrees()
-                
+
     def refresh_degrees(self):
         columnCount = self.table_adjacency.columnCount()
         vertexCount = self.graph.vcount()
