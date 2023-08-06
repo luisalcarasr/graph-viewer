@@ -173,7 +173,7 @@ class MainWindow(QMainWindow):
             layout="kk",
             vertex_label=range(self.graph.vcount()),
             vertex_color="lightblue",
-            edge_label=[("a" + chr(8320 + int(i)) + " (" + str(self.graph.es[i]["weight"] if self.graph.ecount() > 0 else 0) + ")") for i in range(self.graph.ecount())], 
+            edge_label=[("a" + self.format_edge_name(i) + " (" + str(self.graph.es[i]["weight"] if self.graph.ecount() > 0 else 0) + ")") for i in range(self.graph.ecount())], 
             edge_background=bg_color,
         )
 
@@ -198,8 +198,11 @@ class MainWindow(QMainWindow):
     def refresh_cut_vertices(self):
         self.label_cut_vertices_list.setText(str(self.graph.cut_vertices()))
 
+    def format_edge_name(self, index):
+        return "a" + chr(8320 + int(index))
+
     def refresh_bridges(self):
-        self.label_bridges_list.setText(str(self.graph.bridges()))
+        self.label_bridges_list.setText(" ".join([self.format_edge_name(bridge) for bridge in self.graph.bridges()]))
 
     def refresh_image(self):
         pixmap = QPixmap()
