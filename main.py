@@ -1,6 +1,6 @@
 import sys
 import matplotlib.pyplot as plt
-from PySide6.QtWidgets import QApplication, QMainWindow, QLabel, QHBoxLayout, QVBoxLayout, QWidget, QPushButton, QLineEdit, QTableWidget, QTableWidgetItem
+from PySide6.QtWidgets import QApplication, QMainWindow, QLabel, QHBoxLayout, QVBoxLayout, QWidget, QPushButton, QLineEdit, QTableWidget, QTableWidgetItem, QSpinBox
 from PySide6.QtGui import QPixmap, QPalette
 from PySide6.QtCore import Qt
 import io
@@ -38,6 +38,9 @@ class MainWindow(QMainWindow):
         layout.addWidget(widget_result)
 
         # Fields
+        self.label_vertex = QLabel('Vertexes:')
+        self.spin_box_vertex = QSpinBox()
+
         self.label_source = QLabel('Source:')
         self.line_edit_source = QLineEdit()
 
@@ -66,6 +69,8 @@ class MainWindow(QMainWindow):
         controls_layout = QVBoxLayout()
         controls.setLayout(controls_layout)
 
+        controls_layout.addWidget(self.label_vertex)
+        controls_layout.addWidget(self.spin_box_vertex)
         controls_layout.addWidget(self.label_source)
         controls_layout.addWidget(self.line_edit_source)
         controls_layout.addWidget(self.label_target)
