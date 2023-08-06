@@ -1,7 +1,7 @@
 import sys
 import matplotlib.pyplot as plt
 from PySide6.QtWidgets import QApplication, QMainWindow, QLabel, QHBoxLayout, QVBoxLayout, QWidget, QPushButton, QLineEdit, QTableWidget, QTableWidgetItem
-from PySide6.QtGui import QPixmap
+from PySide6.QtGui import QPixmap, QPalette
 from PySide6.QtCore import Qt
 import io
 import igraph as ig
@@ -22,15 +22,16 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(central_widget)
 
         # Generate the graph and show it
-        self.label = QLabel(self)
+        self.container_image = QLabel(self)
         self.table_adjacency = QTableWidget(self)
         self.table_adjacency.cellChanged.connect(self.on_cell_changed)
+        self.table_adjacency.setMaximumHeight(300)
 
 
         layout_result = QVBoxLayout()
         layout_result.setAlignment(Qt.AlignTop)
 
-        layout_result.addWidget(self.label)
+        layout_result.addWidget(self.container_image)
         layout_result.addWidget(self.table_adjacency)
 
         widget_result = QWidget()
@@ -105,7 +106,6 @@ class MainWindow(QMainWindow):
         for i in range(columnCount):
             self.table_adjacency.setItem(columnCount - 1, i, self.make_table_item("0"))
             self.table_adjacency.setItem(i, columnCount - 1, self.make_table_item("0"))
-        self.refresh_degrees()
 
     def on_edge_added(self):
         source = self.line_edit_source.text()
@@ -137,29 +137,32 @@ class MainWindow(QMainWindow):
 
     def on_cell_changed(self, row, column):
         if (row < self.graph.vcount() and column < self.graph.vcount()):
-            weight = int(self.table_adjacency.item(row, column).text())
+            try:
+                weight = int(self.table_adjacency.item(row, column).text())
+            except:
+                weight = 0
             self.add_edge(row, column, weight)
             self.refresh()
 
     def get_graph(self):
-        facecolor = "#ececec"
+        bg_color = self.palette().color(QPalette.ColorRole.Window).name()
 
         _, ax = plt.subplots()
 
-        ax.set_facecolor(facecolor)
+        ax.set_facecolor(bg_color)
 
         ig.plot(
             self.graph,
             target=ax,
-            layout="circle",
+            layout="kk",
             vertex_label=range(self.graph.vcount()),
             vertex_color="lightblue",
             edge_label=self.graph.es["weight"] if self.graph.ecount() > 0 else 0, 
-            edge_background="#ececec",
+            edge_background=bg_color,
         )
 
         buf = io.BytesIO()
-        plt.savefig(buf, format="png", facecolor=facecolor)
+        plt.savefig(buf, format="png", facecolor=bg_color)
         buf.seek(0)
         plt.close()
 
@@ -169,39 +172,44 @@ class MainWindow(QMainWindow):
         self.graph = ig.Graph()
         self.initialize_table_adjacency()
         self.refresh()
-        self.refresh_image()
 
     def refresh(self):
         self.refresh_image()
         self.refresh_degrees()
 
     def refresh_image(self):
-        buf = self.get_graph()
         pixmap = QPixmap()
-        pixmap.loadFromData(buf.read())
-        buf.close()
-        self.label.setPixmap(pixmap)
-        pixmap.scaled(self.label.size(), Qt.KeepAspectRatio)
+        if self.graph.vcount() > 0:
+            buf = self.get_graph()
+            pixmap.loadFromData(buf.read())
+            pixmap.scaled(self.container_image.size(), Qt.KeepAspectRatio)
+            buf.close()
+        else:
+            pixmap.fill(Qt.transparent)
+        self.container_image.setPixmap(pixmap)
 
     def initialize_table_adjacency(self):
         self.table_adjacency.setRowCount(1)
         self.table_adjacency.setColumnCount(1)
         self.table_adjacency.setHorizontalHeaderLabels(['Degrees'] )
         self.table_adjacency.setVerticalHeaderLabels(['Degrees'] )
-        disabled_item = QTableWidgetItem("0")
-        disabled_item.setFlags(Qt.ItemFlag.NoItemFlags)
-        self.table_adjacency.setItem(0, 0, disabled_item)
+        item = self.make_table_item("0")
+        item.setFlags(Qt.ItemFlag.NoItemFlags | Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable)
+        self.table_adjacency.setItem(0, 0, item)
         self.refresh_degrees()
                 
     def refresh_degrees(self):
-
-        for i in range(self.table_adjacency.rowCount()):
-            self.table_adjacency.setRowHeight(self.graph.vcount(), 30)
-            self.table_adjacency.setColumnWidth(self.graph.vcount(), 90)
-            item = self.make_table_item(str(self.graph.degree(i) if self.graph.vcount() > 0 else 0))
+        columnCount = self.table_adjacency.columnCount()
+        vertexCount = self.graph.vcount()
+        for i in range(columnCount - 1):
+            self.table_adjacency.setRowHeight(vertexCount, 30)
+            self.table_adjacency.setColumnWidth(vertexCount, 90)
+            item = self.make_table_item(str(self.graph.degree(i) if vertexCount > 0 else 0))
             item.setFlags(Qt.ItemFlag.NoItemFlags | Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable)
-            self.table_adjacency.setItem(self.graph.vcount(), i, item.clone())
-            self.table_adjacency.setItem(i, self.graph.vcount(), item.clone())
+            self.table_adjacency.blockSignals(True)
+            self.table_adjacency.setItem(vertexCount, i, item.clone())
+            self.table_adjacency.setItem(i, vertexCount, item.clone())
+            self.table_adjacency.blockSignals(False)
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
