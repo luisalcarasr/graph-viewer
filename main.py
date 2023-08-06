@@ -64,6 +64,12 @@ class MainWindow(QMainWindow):
         self.refresh_button = QPushButton('Refresh', self)
         self.refresh_button.clicked.connect(self.refresh)
 
+        self.label_cut_vertices = QLabel('Cut Points:')
+        self.label_cut_vertices_list = QLabel('')
+
+        self.label_bridges = QLabel('Bridges:')
+        self.label_bridges_list = QLabel('')
+
         controls = QWidget()
         controls.setMaximumWidth(200)
         controls_layout = QVBoxLayout()
@@ -82,6 +88,11 @@ class MainWindow(QMainWindow):
         controls_layout.addWidget(self.add_vertex_button)
         controls_layout.addWidget(self.reset_button)
         controls_layout.addWidget(self.refresh_button)
+
+        controls_layout.addWidget(self.label_cut_vertices)
+        controls_layout.addWidget(self.label_cut_vertices_list)
+        controls_layout.addWidget(self.label_bridges)
+        controls_layout.addWidget(self.label_bridges_list)
 
         controls_layout.setAlignment(Qt.AlignTop)
 
@@ -160,7 +171,7 @@ class MainWindow(QMainWindow):
             layout="kk",
             vertex_label=range(self.graph.vcount()),
             vertex_color="lightblue",
-            edge_label=self.graph.es["weight"] if self.graph.ecount() > 0 else 0, 
+            edge_label=[("a" + chr(8320 + int(i)) + " (" + str(self.graph.es[i]["weight"] if self.graph.ecount() > 0 else 0) + ")") for i in range(self.graph.ecount())], 
             edge_background=bg_color,
         )
 
@@ -179,6 +190,14 @@ class MainWindow(QMainWindow):
     def refresh(self):
         self.refresh_image()
         self.refresh_degrees()
+        self.refresh_cut_vertices()
+        self.refresh_bridges()
+
+    def refresh_cut_vertices(self):
+        self.label_cut_vertices_list.setText(str(self.graph.cut_vertices()))
+
+    def refresh_bridges(self):
+        self.label_bridges_list.setText(str(self.graph.bridges()))
 
     def refresh_image(self):
         pixmap = QPixmap()
