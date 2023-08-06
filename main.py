@@ -196,7 +196,7 @@ class MainWindow(QMainWindow):
         self.refresh_bridges()
 
     def refresh_cut_vertices(self):
-        self.label_cut_vertices_list.setText(str(self.graph.cut_vertices()))
+        self.label_cut_vertices_list.setText("".join(str(i) for i in self.graph.cut_vertices()))
 
     def format_edge_name(self, index):
         return "a" + chr(8320 + int(index))
