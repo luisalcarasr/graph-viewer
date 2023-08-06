@@ -116,8 +116,10 @@ class MainWindow(QMainWindow):
         self.table_adjacency.setVerticalHeaderItem(columnCount - 1, QTableWidgetItem(str(columnCount - 1)))
 
         for i in range(columnCount):
+            self.table_adjacency.blockSignals(True)
             self.table_adjacency.setItem(columnCount - 1, i, self.make_table_item("0"))
             self.table_adjacency.setItem(i, columnCount - 1, self.make_table_item("0"))
+            self.table_adjacency.blockSignals(False)
 
     def on_edge_added(self):
         source = self.line_edit_source.text()
