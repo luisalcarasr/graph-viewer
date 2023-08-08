@@ -40,6 +40,9 @@ class MainWindow(QMainWindow):
         # Fields
         self.label_vertex = QLabel('Vertexes:')
         self.spin_box_vertex = QSpinBox()
+        self.spin_box_vertex.setMinimum(0)
+        self.spin_box_vertex.setMaximum(99)
+        self.spin_box_vertex.valueChanged.connect(self.on_vertex_changed)
 
         self.label_source = QLabel('Source:')
         self.line_edit_source = QLineEdit()
@@ -105,11 +108,40 @@ class MainWindow(QMainWindow):
         item.setFlags(Qt.ItemIsEnabled | Qt.ItemIsSelectable | Qt.ItemIsEditable)
         item.setTextAlignment(Qt.AlignCenter)
         return item
+
+    def on_vertex_changed(self, size):
+        graph = ig.Graph()
+        self.initialize_table_adjacency()
+
+        graph.add_vertices(size)
+        for vertex in range(min(self.graph.vcount(), graph.vcount())):
+            for attr_name in self.graph.vs.attributes():
+                graph.vs[vertex][attr_name] = self.graph.vs[vertex][attr_name]
+        
+        diff = graph.vcount() - self.graph.vcount()
+        if diff > 0:
+            for _ in range(abs(diff)):
+                self.add_column()
+        else:
+            self.table_adjacency.setColumnCount(graph.vcount())
+            self.table_adjacency.setRowCount(graph.vcount())
+
+        graph.add_edges(self.graph.get_edgelist())
+        for edge in range(min(self.graph.ecount(), graph.ecount())):
+            for attr_name in self.graph.es.attributes():
+                graph.es[edge][attr_name] = self.graph.es[edge][attr_name]
+        
+        self.graph = graph
+        self.refresh_image()
     
     def add_vertex(self):
-        columnCount = self.table_adjacency.columnCount()
         self.graph.add_vertex()
         self.refresh_image()
+        self.spin_box_vertex.setValue(self.graph.vcount())
+        self.add_column()
+
+    def add_column(self):
+        columnCount = self.table_adjacency.columnCount()
         self.table_adjacency.insertColumn(columnCount - 1)
         self.table_adjacency.insertRow(columnCount - 1)
         self.table_adjacency.setHorizontalHeaderItem(columnCount - 1, QTableWidgetItem(str(columnCount - 1)))

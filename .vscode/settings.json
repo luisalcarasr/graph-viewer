@@ -1,11 +1,12 @@
 {
-    "cSpell.words": [
-        "ecount",
-        "facecolor",
-        "igraph",
-        "matplotlib",
-        "pixmap",
-        "pyplot",
-        "savefig"
-    ]
+  "cSpell.words": [
+    "ecount",
+    "edgelist",
+    "facecolor",
+    "igraph",
+    "matplotlib",
+    "pixmap",
+    "pyplot",
+    "savefig"
+  ]
 }
