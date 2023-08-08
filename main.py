@@ -29,8 +29,33 @@ class MainWindow(QMainWindow):
 
         layout_result = QVBoxLayout()
         layout_result.setAlignment(Qt.AlignTop)
+        
+        graph_widget_layout = QHBoxLayout()
+        graph_widget = QWidget()
+        graph_widget.setLayout(graph_widget_layout)
+        layout_result.addWidget(graph_widget)
 
-        layout_result.addWidget(self.container_image)
+        self.label_cut_vertices = QLabel('Cut Points:')
+        self.label_cut_vertices_list = QLabel('')
+
+        self.label_bridges = QLabel('Bridges:')
+        self.label_bridges_list = QLabel('')
+
+        graph_widget_layout.addWidget(self.container_image)
+
+        legends_layout = QVBoxLayout()
+        legends_widget = QWidget()
+        legends_widget.setLayout(legends_layout)
+        legends_widget.setMaximumWidth(200)
+        legends_layout.setAlignment(Qt.AlignTop)
+
+        legends_layout.addWidget(self.label_cut_vertices)
+        legends_layout.addWidget(self.label_cut_vertices_list)
+        legends_layout.addWidget(self.label_bridges)
+        legends_layout.addWidget(self.label_bridges_list)
+
+        graph_widget_layout.addWidget(legends_widget)
+
         layout_result.addWidget(self.table_adjacency)
 
         widget_result = QWidget()
@@ -67,37 +92,38 @@ class MainWindow(QMainWindow):
         self.refresh_button = QPushButton('Refresh', self)
         self.refresh_button.clicked.connect(self.refresh)
 
-        self.label_cut_vertices = QLabel('Cut Points:')
-        self.label_cut_vertices_list = QLabel('')
-
-        self.label_bridges = QLabel('Bridges:')
-        self.label_bridges_list = QLabel('')
-
         controls = QWidget()
         controls.setMaximumWidth(200)
         controls_layout = QVBoxLayout()
         controls.setLayout(controls_layout)
 
-        controls_layout.addWidget(self.label_vertex)
-        controls_layout.addWidget(self.spin_box_vertex)
-        controls_layout.addWidget(self.label_source)
-        controls_layout.addWidget(self.line_edit_source)
-        controls_layout.addWidget(self.label_target)
-        controls_layout.addWidget(self.line_edit_target)
-        controls_layout.addWidget(self.label_weight)
-        controls_layout.addWidget(self.line_edit_weight)
+        top_controls = QWidget()
+        top_controls_layout = QVBoxLayout()
+        top_controls.setLayout(top_controls_layout)
 
-        controls_layout.addWidget(self.add_edge_button)
-        controls_layout.addWidget(self.add_vertex_button)
-        controls_layout.addWidget(self.reset_button)
-        controls_layout.addWidget(self.refresh_button)
+        bottom_controls = QWidget()
+        bottom_controls_layout = QVBoxLayout()
+        bottom_controls.setLayout(bottom_controls_layout)
 
-        controls_layout.addWidget(self.label_cut_vertices)
-        controls_layout.addWidget(self.label_cut_vertices_list)
-        controls_layout.addWidget(self.label_bridges)
-        controls_layout.addWidget(self.label_bridges_list)
+        controls_layout.addWidget(top_controls)
+        controls_layout.addWidget(bottom_controls)
 
-        controls_layout.setAlignment(Qt.AlignTop)
+        top_controls_layout.addWidget(self.label_vertex)
+        top_controls_layout.addWidget(self.spin_box_vertex)
+        top_controls_layout.addWidget(self.label_source)
+        top_controls_layout.addWidget(self.line_edit_source)
+        top_controls_layout.addWidget(self.label_target)
+        top_controls_layout.addWidget(self.line_edit_target)
+        top_controls_layout.addWidget(self.label_weight)
+        top_controls_layout.addWidget(self.line_edit_weight)
+        top_controls_layout.addWidget(self.add_edge_button)
+
+        bottom_controls_layout.addWidget(self.add_vertex_button)
+        bottom_controls_layout.addWidget(self.reset_button)
+        bottom_controls_layout.addWidget(self.refresh_button)
+
+        top_controls_layout.setAlignment(Qt.AlignTop)
+        bottom_controls_layout.setAlignment(Qt.AlignBottom)
 
         layout.addWidget(controls)
 
@@ -137,7 +163,9 @@ class MainWindow(QMainWindow):
     def add_vertex(self):
         self.graph.add_vertex()
         self.refresh_image()
+        self.spin_box_vertex.blockSignals(True)
         self.spin_box_vertex.setValue(self.graph.vcount())
+        self.spin_box_vertex.blockSignals(False)
         self.add_column()
 
     def add_column(self):
@@ -205,7 +233,7 @@ class MainWindow(QMainWindow):
             layout="kk",
             vertex_label=range(self.graph.vcount()),
             vertex_color="lightblue",
-            edge_label=[("a" + self.format_edge_name(i) + " (" + str(self.graph.es[i]["weight"] if self.graph.ecount() > 0 else 0) + ")") for i in range(self.graph.ecount())], 
+            edge_label=[(self.format_edge_name(i) + " (" + str(self.graph.es[i]["weight"] if self.graph.ecount() > 0 else 0) + ")") for i in range(self.graph.ecount())], 
             edge_background=bg_color,
         )
 
