@@ -67,6 +67,7 @@ class MainWindow(QMainWindow):
         self.spin_box_vertex = QSpinBox()
         self.spin_box_vertex.setMinimum(0)
         self.spin_box_vertex.setMaximum(99)
+        self.spin_box_vertex.setDisabled(True) # Remove this line to enable the spin box
         self.spin_box_vertex.valueChanged.connect(self.on_vertex_changed)
 
         self.label_source = QLabel('Source:')
