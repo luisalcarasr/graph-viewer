@@ -5,6 +5,7 @@ from PySide6.QtGui import QPixmap, QPalette
 from PySide6.QtCore import Qt
 import io
 import igraph as ig
+import graph as g
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -13,7 +14,7 @@ class MainWindow(QMainWindow):
         self.setWindowTitle('Graph Visualizer')
         self.setWindowState(Qt.WindowMaximized)
 
-        self.graph = ig.Graph()
+        self.graph = g.Graph()
 
         # Create a vertical layout and a widget to contain the image and the button
         layout = QHBoxLayout()
@@ -137,24 +138,21 @@ class MainWindow(QMainWindow):
         return item
 
     def on_vertex_changed(self, size):
-        graph = ig.Graph()
+        graph = g.Graph()
         self.initialize_table_adjacency()
 
-        graph.add_vertices(size)
-        for vertex in range(min(self.graph.vcount(), graph.vcount())):
-            for attr_name in self.graph.vs.attributes():
-                graph.vs[vertex][attr_name] = self.graph.vs[vertex][attr_name]
+        graph.set_vertices(size)
         
-        diff = graph.vcount() - self.graph.vcount()
+        diff = graph.get_vertices_count() - self.graph.get_vertices_count()
         if diff > 0:
             for _ in range(abs(diff)):
                 self.add_column()
         else:
-            self.table_adjacency.setColumnCount(graph.vcount())
-            self.table_adjacency.setRowCount(graph.vcount())
+            self.table_adjacency.setColumnCount(graph.get_vertices_count())
+            self.table_adjacency.setRowCount(graph.get_vertices_count())
 
         graph.add_edges(self.graph.get_edgelist())
-        for edge in range(min(self.graph.ecount(), graph.ecount())):
+        for edge in range(min(self.graph.get_edges_count()(), graph.get_edges_count()())):
             for attr_name in self.graph.es.attributes():
                 graph.es[edge][attr_name] = self.graph.es[edge][attr_name]
         
@@ -165,7 +163,7 @@ class MainWindow(QMainWindow):
         self.graph.add_vertex()
         self.refresh_image()
         self.spin_box_vertex.blockSignals(True)
-        self.spin_box_vertex.setValue(self.graph.vcount())
+        self.spin_box_vertex.setValue(self.graph.get_vertices_count())
         self.spin_box_vertex.blockSignals(False)
         self.add_column()
 
@@ -194,18 +192,18 @@ class MainWindow(QMainWindow):
         self.refresh()
     
     def add_edge(self, source, target, weight):
-        if (source >= self.graph.vcount() or target >= self.graph.vcount()):
+        if (source >= self.graph.get_vertices_count() or target >= self.graph.get_vertices_count()):
             return
 
         weight = weight if weight > 0 else 0
 
         try:
-            self.graph.delete_edges(self.graph.get_eid(source, target))
+            self.graph.delete_edge(source, target)
         except:
             pass
 
         if (weight > 0):
-            self.graph.add_edge(source, target, weight=weight)
+            self.graph.add_edge(source, target, weight)
 
         self.table_adjacency.blockSignals(True)
         self.table_adjacency.setItem(source, target, self.make_table_item(str(weight)))
@@ -213,7 +211,7 @@ class MainWindow(QMainWindow):
         self.table_adjacency.blockSignals(False)
 
     def on_cell_changed(self, row, column):
-        if (row < self.graph.vcount() and column < self.graph.vcount()):
+        if (row < self.graph.get_vertices_count() and column < self.graph.get_vertices_count()):
             try:
                 weight = int(self.table_adjacency.item(row, column).text())
             except:
@@ -222,6 +220,12 @@ class MainWindow(QMainWindow):
             self.refresh()
 
     def get_graph(self):
+        graph = ig.Graph()
+        graph.add_vertices(self.graph.get_vertices_count())
+        for edge in self.graph.edges:
+            source, target, weight = edge
+            graph.add_edge(source, target, weight=weight)
+
         bg_color = self.palette().color(QPalette.ColorRole.Window).name()
 
         _, ax = plt.subplots()
@@ -229,12 +233,12 @@ class MainWindow(QMainWindow):
         ax.set_facecolor(bg_color)
 
         ig.plot(
-            self.graph,
+            graph,
             target=ax,
             layout="kk",
-            vertex_label=range(self.graph.vcount()),
+            vertex_label=range(self.graph.get_vertices_count()),
             vertex_color="lightblue",
-            edge_label=[(self.format_edge_name(i) + " (" + str(self.graph.es[i]["weight"] if self.graph.ecount() > 0 else 0) + ")") for i in range(self.graph.ecount())], 
+            edge_label=[(self.format_edge_name(i) + " (" + str(graph.es[i]["weight"] if graph.ecount() > 0 else 0) + ")") for i in range(graph.ecount())], 
             edge_background=bg_color,
         )
 
@@ -246,9 +250,9 @@ class MainWindow(QMainWindow):
         return buf
     
     def reset_graph(self):
-        self.graph = ig.Graph()
+        self.graph = g.Graph()
         self.initialize_table_adjacency()
-        self.refresh_image()
+        self.refresh()
 
     def refresh(self):
         self.refresh_image()
@@ -257,17 +261,17 @@ class MainWindow(QMainWindow):
         self.refresh_bridges()
 
     def refresh_cut_vertices(self):
-        self.label_cut_vertices_list.setText("".join(str(i) for i in self.graph.cut_vertices()))
+        self.label_cut_vertices_list.setText("".join(str(i) for i in self.graph.get_cut_vertices()))
 
     def format_edge_name(self, index):
         return "a" + chr(8320 + int(index))
 
     def refresh_bridges(self):
-        self.label_bridges_list.setText(" ".join([self.format_edge_name(bridge) for bridge in self.graph.bridges()]))
+        self.label_bridges_list.setText(" ".join([str((bridge)) for bridge in self.graph.get_bridges()]))
 
     def refresh_image(self):
         pixmap = QPixmap()
-        if self.graph.vcount() > 0:
+        if self.graph.get_vertices_count() > 0:
             buf = self.get_graph()
             pixmap.loadFromData(buf.read())
             pixmap.scaled(self.container_image.size(), Qt.KeepAspectRatio)
@@ -287,11 +291,11 @@ class MainWindow(QMainWindow):
 
     def refresh_degrees(self):
         columnCount = self.table_adjacency.columnCount()
-        vertexCount = self.graph.vcount()
+        vertexCount = self.graph.get_vertices_count()
         for i in range(columnCount - 1):
             self.table_adjacency.setRowHeight(vertexCount, 30)
             self.table_adjacency.setColumnWidth(vertexCount, 90)
-            item = self.make_table_item(str(self.graph.degree(i) if vertexCount > 0 else 0))
+            item = self.make_table_item(str(self.graph.get_degrees()[i] if vertexCount > 0 else 0))
             item.setFlags(Qt.ItemFlag.NoItemFlags | Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable)
             self.table_adjacency.blockSignals(True)
             self.table_adjacency.setItem(vertexCount, i, item.clone())
