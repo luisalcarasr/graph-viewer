@@ -261,13 +261,19 @@ class MainWindow(QMainWindow):
         self.refresh_bridges()
 
     def refresh_cut_vertices(self):
-        self.label_cut_vertices_list.setText("".join(str(i) for i in self.graph.get_cut_vertices()))
+        if (self.graph.is_connected()):
+            self.label_cut_vertices_list.setText("".join(str(i) for i in self.graph.get_cut_vertices()))
+        else:
+            self.label_cut_vertices_list.setText("Graph is not connected")
 
     def format_edge_name(self, index):
         return "a" + chr(8320 + int(index))
 
     def refresh_bridges(self):
-        self.label_bridges_list.setText(" ".join([str((bridge)) for bridge in self.graph.get_bridges()]))
+        if (self.graph.is_connected()):
+            self.label_bridges_list.setText(" ".join([str((bridge)) for bridge in self.graph.get_bridges()]))
+        else:
+            self.label_bridges_list.setText("Graph is not connected")
 
     def refresh_image(self):
         pixmap = QPixmap()
